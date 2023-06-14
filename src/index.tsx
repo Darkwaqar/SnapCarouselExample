@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, useRef, useState} from 'react';
 import {
   Platform,
   View,
@@ -6,9 +6,13 @@ import {
   Text,
   StatusBar,
   SafeAreaView,
+  ListRenderItem,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import Carousel, {
+  AdditionalParallaxProps,
+  Pagination,
+} from 'react-native-snap-carousel';
 import {sliderWidth, itemWidth} from './styles/SliderEntry.style';
 import SliderEntry from './components/SliderEntry';
 import styles, {colors} from './styles/index.style';
@@ -18,19 +22,16 @@ import {scrollInterpolators, animatedStyles} from './utils/animations';
 const IS_ANDROID = Platform.OS === 'android';
 const SLIDER_1_FIRST_ITEM = 1;
 
-export default class example extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      slider1ActiveSlide: SLIDER_1_FIRST_ITEM,
-    };
-  }
+export const example = () => {
+  const [slider1ActiveSlide, setSlider1ActiveSlide] =
+    useState(SLIDER_1_FIRST_ITEM);
+  const _slider1Ref = React.useRef(null);
 
-  _renderItem({item, index}) {
+  const _renderItem = ({item, index}) => {
     return <SliderEntry data={item} even={(index + 1) % 2 === 0} />;
-  }
+  };
 
-  _renderItemWithParallax({item, index}, parallaxProps) {
+  const _renderItemWithParallax = ({item, index}, parallaxProps) => {
     return (
       <SliderEntry
         data={item}
@@ -39,27 +40,25 @@ export default class example extends Component {
         parallaxProps={parallaxProps}
       />
     );
-  }
+  };
 
-  _renderLightItem({item, index}) {
+  const _renderLightItem = ({item, index}) => {
     return <SliderEntry data={item} even={false} />;
-  }
+  };
 
-  _renderDarkItem({item, index}) {
+  const _renderDarkItem = ({item, index}) => {
     return <SliderEntry data={item} even={true} />;
-  }
+  };
 
-  mainExample(number, title) {
-    const {slider1ActiveSlide} = this.state;
-
+  const mainExample = (number, title) => {
     return (
       <View style={styles.exampleContainer}>
         <Text style={styles.title}>{`Example ${number}`}</Text>
         <Text style={styles.subtitle}>{title}</Text>
         <Carousel
-          ref={c => (this._slider1Ref = c)}
+          ref={_slider1Ref}
           data={ENTRIES1}
-          renderItem={this._renderItemWithParallax}
+          renderItem={_renderItemWithParallax}
           sliderWidth={sliderWidth}
           itemWidth={itemWidth}
           hasParallaxImages={true}
@@ -74,7 +73,7 @@ export default class example extends Component {
           autoplay={true}
           autoplayDelay={500}
           autoplayInterval={3000}
-          onSnapToItem={index => this.setState({slider1ActiveSlide: index})}
+          onSnapToItem={index => setSlider1ActiveSlide(index)}
         />
         <Pagination
           dotsLength={ENTRIES1.length}
@@ -85,21 +84,21 @@ export default class example extends Component {
           inactiveDotColor={colors.black}
           inactiveDotOpacity={0.4}
           inactiveDotScale={0.6}
-          carouselRef={this._slider1Ref}
-          tappableDots={!!this._slider1Ref}
+          carouselRef={_slider1Ref.current}
+          tappableDots={!!_slider1Ref.current}
         />
       </View>
     );
-  }
+  };
 
-  momentumExample(number, title) {
+  const momentumExample = (number, title) => {
     return (
       <View style={styles.exampleContainer}>
         <Text style={styles.title}>{`Example ${number}`}</Text>
         <Text style={styles.subtitle}>{title}</Text>
         <Carousel
           data={ENTRIES2}
-          renderItem={this._renderItem}
+          renderItem={_renderItem}
           sliderWidth={sliderWidth}
           itemWidth={itemWidth}
           inactiveSlideScale={0.95}
@@ -116,9 +115,9 @@ export default class example extends Component {
         />
       </View>
     );
-  }
+  };
 
-  layoutExample(number, title, type) {
+  const layoutExample = (number, title, type) => {
     const isTinder = type === 'tinder';
     return (
       <View
@@ -136,7 +135,7 @@ export default class example extends Component {
         </Text>
         <Carousel
           data={isTinder ? ENTRIES2 : ENTRIES1}
-          renderItem={isTinder ? this._renderLightItem : this._renderItem}
+          renderItem={isTinder ? _renderLightItem : _renderItem}
           sliderWidth={sliderWidth}
           itemWidth={itemWidth}
           containerCustomStyle={styles.slider}
@@ -146,9 +145,32 @@ export default class example extends Component {
         />
       </View>
     );
-  }
+  };
 
-  customExample(number, title, refNumber, renderItemFunc) {
+  const customExample = (
+    number: number,
+    title:
+      | string
+      | number
+      | boolean
+      | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+      | Iterable<React.ReactNode>
+      | null
+      | undefined,
+    refNumber: number,
+    renderItemFunc: ListRenderItem<{
+      title: string;
+      subtitle: string;
+      illustration: string;
+    }> &
+      ((
+        item: {
+          item: {title: string; subtitle: string; illustration: string};
+          index: number;
+        },
+        parallaxProps?: AdditionalParallaxProps | undefined,
+      ) => React.ReactNode),
+  ) => {
     const isEven = refNumber % 2 === 0;
 
     // Do not render examples on Android; because of the zIndex bug, they won't work as is
@@ -183,87 +205,57 @@ export default class example extends Component {
     ) : (
       false
     );
-  }
+  };
 
-  get gradient() {
+  const gradient = () => {
     return (
       <LinearGradient
         colors={[colors.background1, colors.background2]}
-        startPoint={{x: 1, y: 0}}
-        endPoint={{x: 0, y: 1}}
+        start={{x: 1, y: 0}}
+        end={{x: 0, y: 1}}
         style={styles.gradient}
       />
     );
-  }
+  };
 
-  render() {
-    const example1 = this.mainExample(
-      1,
-      'Default layout | Loop | Autoplay | Parallax | Scale | Opacity | Pagination with tappable dots',
-    );
-    const example2 = this.momentumExample(
-      2,
-      'Momentum | Left-aligned | Active animation',
-    );
-    const example3 = this.layoutExample(
-      3,
-      '"Stack of cards" layout | Loop',
-      'stack',
-    );
-    const example4 = this.layoutExample(
-      4,
-      '"Tinder-like" layout | Loop',
-      'tinder',
-    );
-    const example5 = this.customExample(
-      5,
-      'Custom animation 1',
-      1,
-      this._renderItem,
-    );
-    const example6 = this.customExample(
-      6,
-      'Custom animation 2',
-      2,
-      this._renderLightItem,
-    );
-    const example7 = this.customExample(
-      7,
-      'Custom animation 3',
-      3,
-      this._renderDarkItem,
-    );
-    const example8 = this.customExample(
-      8,
-      'Custom animation 4',
-      4,
-      this._renderLightItem,
-    );
-
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <StatusBar
-            translucent={true}
-            backgroundColor={'rgba(0, 0, 0, 0.3)'}
-            barStyle={'light-content'}
-          />
-          {this.gradient}
-          <ScrollView
-            style={styles.scrollview}
-            scrollEventThrottle={200}
-            directionalLockEnabled={true}>
-            {example1}
-            {example2}
-            {example3}
-            {example4}
-            {example5}
-            {example6}
-            {example7}
-            {example8}
-          </ScrollView>
-        </View>
-      </SafeAreaView>
-    );
-  }
-}
+  const example1 = mainExample(
+    1,
+    'Default layout | Loop | Autoplay | Parallax | Scale | Opacity | Pagination with tappable dots',
+  );
+  const example2 = momentumExample(
+    2,
+    'Momentum | Left-aligned | Active animation',
+  );
+  const example3 = layoutExample(3, '"Stack of cards" layout | Loop', 'stack');
+  const example4 = layoutExample(4, '"Tinder-like" layout | Loop', 'tinder');
+  const example5 = customExample(5, 'Custom animation 1', 1, _renderItem);
+  const example6 = customExample(6, 'Custom animation 2', 2, _renderLightItem);
+  const example7 = customExample(7, 'Custom animation 3', 3, _renderDarkItem);
+  const example8 = customExample(8, 'Custom animation 4', 4, _renderLightItem);
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <StatusBar
+          translucent={true}
+          backgroundColor={'rgba(0, 0, 0, 0.3)'}
+          barStyle={'light-content'}
+        />
+        {gradient()}
+        <ScrollView
+          style={styles.scrollview}
+          scrollEventThrottle={200}
+          directionalLockEnabled={true}>
+          {example1}
+          {example2}
+          {example3}
+          {example4}
+          {example5}
+          {example6}
+          {example7}
+          {example8}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+};
+export default example;
